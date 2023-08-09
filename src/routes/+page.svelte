@@ -3,6 +3,7 @@
     let firstRow = '';
     let secondRow = '';
     let thirdRow = '';
+    let alignment = "left";  // default alignment
 
     interface Cell {
         id: number;
@@ -65,6 +66,14 @@
 
         for (let rowInput of [firstRow, secondRow, thirdRow]) {
             let start = 9;
+
+            // Alignment calculations
+            if (alignment === "left") {
+                start = 0;
+            } else if (alignment === "center") {
+                start = Math.max(0, Math.floor((21 - rowInput.length) / 2));
+            } // For right alignment, start will be (21 - rowInput.length).
+
             for (let i = 0; i < rowInput.length; i++) {
                 const delay = i * 200;  // adjust the multiplier as needed
                 promises.push(animateCell(cells[rowIndex][start + i], rowInput.charAt(i), delay));
@@ -74,6 +83,38 @@
         Promise.all(promises);
     }
 
+    async function save() {
+        let flatBoard = flattenBoard(cells);
+
+        try {
+            const response = await fetch("http://localhost:8081/save", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: flatBoard })
+            });
+
+            if (!response.ok) {
+                console.error("Failed to send board:", response.statusText);
+                return;
+            }
+
+            console.log("Board sent successfully!");
+        } catch (error) {
+            console.error("Error sending board:", error);
+        }
+    }
+
+    function flattenBoard(board) {
+        let flatBoard = [];
+        for (let row of board) {
+            for (let cell of row) {
+                flatBoard.push(cell.value);
+            }
+        }
+        return flatBoard;
+    }
 
 
 </script>
@@ -106,23 +147,34 @@
     {/each}
 </div>
 
+<div class="flex flex-col max-w-[300px] mt-4">
+    <label class="mb-2 flex justify-center">Alignment</label>
+    <select bind:value={alignment}>
+        <option value="left">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+    </select>
+</div>
+
+
 <div class="flex justify-center mt-14 flex-col w-full items-center">
     <div class="flex flex-col max-w-[300px]">
         <label class="mb-2 flex justify-center">First Row</label>
-        <input type="text" bind:value={firstRow} pattern="[A-Za-z0-9]*" on:input="{e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')}" />
+        <input type="text" bind:value={firstRow} pattern="[A-Za-z0-9 ]*" on:input="{e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, '')}" />
     </div>
 
     <div class="flex flex-col max-w-[300px] mt-4">
         <label class="mb-2 flex justify-center">Second Row</label>
-        <input type="text" bind:value={secondRow} pattern="[A-Za-z0-9]*" on:input="{e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')}" />
+        <input type="text" bind:value={secondRow} pattern="[A-Za-z0-9 ]*" on:input="{e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, '')}" />
     </div>
 
     <div class="flex flex-col max-w-[300px] mt-4">
         <label class="mb-2 flex justify-center">Third Row</label>
-        <input type="text" bind:value={thirdRow} pattern="[A-Za-z0-9]*" on:input="{e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')}" />
+        <input type="text" bind:value={thirdRow} pattern="[A-Za-z0-9 ]*" on:input="{e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, '')}" />
     </div>
 
     <button class="bg-[#1da1f2] border-2 border-black mt-4 " on:click={submit}>Submit</button>
+    <button on:click={save}>Save</button>
 
 </div>
 
