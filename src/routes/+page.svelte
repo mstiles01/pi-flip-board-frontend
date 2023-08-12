@@ -13,12 +13,13 @@
     let cellData = [
         "", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
         "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
-        "#FF0000", "#0000FF", "#FFFF00", "#008000", "#800080", "#FFA500"
+        "#FF0000", "#0000FF", "#FFFF00", "#008000", "#800080", "#FFA500",
+        "!",
     ];
 
     let cells: Cell[][] = [];
 
-    onMount(() => {
+    onMount( async () => {
         let newCells: Cell[][] = [];
         for(let i = 0; i < 5; i++) {
             let row: Cell[] = [];
@@ -28,7 +29,44 @@
             newCells.push(row);
         }
         cells = newCells;  // this will trigger Svelte's reactivity
+
+        await  await fetchSavedMessage();  // this will load your data on page load
+
     });
+
+    async function fetchSavedMessage() {
+        try {
+            const response = await fetch("http://localhost:8081/getMessage"); // Adjust the endpoint accordingly
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+            const data = await response.json();
+
+            if (data.message) {
+
+                populateCells(data.message);
+            } else {
+                console.log("No saved message for the user.");
+            }
+        } catch (error) {
+            console.error("Error fetching saved message:", error);
+        }
+    }
+
+    function populateCells(savedMessage: string[]) {
+        let newCells: Cell[][] = [];
+        let k = 0; // Counter for savedMessage
+
+        for(let i = 0; i < 5; i++) {
+            let row: Cell[] = [];
+            for(let j = 0; j < 21 && k < savedMessage.length; j++, k++) {
+                row.push({id: i*21+j, value: savedMessage[k]});
+            }
+            newCells.push(row);
+        }
+        cells = newCells;  // this will trigger Svelte's reactivity
+    }
+
 
     function handleClick(cell: Cell) {
         let index = cellData.indexOf(cell.value);
@@ -116,6 +154,12 @@
         return flatBoard;
     }
 
+    function  spotifyConnect() {
+
+
+
+    }
+
 
 </script>
 
@@ -174,6 +218,7 @@
     </div>
 
     <button class="bg-[#1da1f2] border-2 border-black mt-4 " on:click={submit}>Submit</button>
+    <button on:click={spotifyConnect}>Connect To Spotify</button>
     <button on:click={save}>Save</button>
 
 </div>
